@@ -107,7 +107,16 @@ def logout():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    current_level = None
+    challenge_levels = []
+    if "user" in session:
+        conn = get_db()
+        current_level = get_player_level(conn, session["user"]["email"])
+        conn.close()
+        challenge_levels = LEVELS[LEVELS.index(current_level) + 1 :]
+    return render_template(
+        "index.html", current_level=current_level, challenge_levels=challenge_levels
+    )
 
 
 @app.route("/ranking")
@@ -180,7 +189,11 @@ def api_quiz():
         conn.close()
         return jsonify({"error": "No questions have been loaded yet"}), 400
 
-    level = get_player_level(conn, session["user"]["email"])
+    requested_level = request.args.get("level", "").strip().upper()
+    if requested_level in LEVELS:
+        level = requested_level
+    else:
+        level = get_player_level(conn, session["user"]["email"])
     chosen = pick_for_level(question_rows, level, count=10)
 
     quiz = []

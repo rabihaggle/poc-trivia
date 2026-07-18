@@ -14,7 +14,7 @@
     {% include "_user_bar.html" %}
   </header>
 
-  <div id="start-screen" class="screen">
+  <div id="start-screen" class="screen" data-current-level="{{ current_level }}">
     <div class="hero">
       <span class="hero-emoji hero-emoji-1">🎓</span>
       <span class="hero-emoji hero-emoji-2">💬</span>
@@ -24,7 +24,17 @@
       <span class="hero-emoji hero-emoji-6">🚀</span>
       <h2 class="hero-title">Ready to test your English?</h2>
       <p class="hero-tagline">10 quick questions. One shot at bragging rights.</p>
-      <button id="start-btn" class="btn btn-primary btn-hero btn-pulse">Start ▶</button>
+      <button type="button" class="btn btn-primary btn-hero btn-pulse" data-start-level="">Start ▶</button>
+      <div id="challenge-row" class="challenge-row">
+        {% if challenge_levels %}
+        <p class="challenge-hint">Feeling lucky? Skip ahead:</p>
+        <div class="challenge-buttons">
+          {% for lvl in challenge_levels %}
+          <button type="button" class="btn btn-challenge" data-start-level="{{ lvl }}">🍀 I'll risk it — {{ lvl }}</button>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
     </div>
   </div>
 

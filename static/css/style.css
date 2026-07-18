@@ -545,6 +545,42 @@ body {
   50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 0 0 10px rgba(255, 255, 255, 0); }
 }
 
+.challenge-row {
+  position: relative;
+  margin-top: 1.5rem;
+  min-height: 1px;
+}
+
+.challenge-hint {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  margin: 0 0 0.6rem;
+  animation: fadeInUp 0.5s ease;
+}
+
+.challenge-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  animation: fadeInUp 0.5s ease;
+}
+
+.btn-challenge {
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+}
+
+.btn-challenge:hover {
+  background: rgba(255, 255, 255, 0.32);
+  transform: translateY(-2px);
+}
+
 /* Quiz progress */
 .quiz-meta {
   text-align: center;

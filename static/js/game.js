@@ -1,5 +1,5 @@
-const startBtn = document.getElementById('start-btn');
 const startScreen = document.getElementById('start-screen');
+const challengeRow = document.getElementById('challenge-row');
 const quizForm = document.getElementById('quiz-form');
 const quizLevelText = document.getElementById('quiz-level-text');
 const progressFill = document.getElementById('progress-fill');
@@ -38,8 +38,35 @@ const MOTIVATION_PHRASES = {
 };
 
 const CONFETTI_COLORS = ['#6c5ce7', '#fd79a8', '#74b9ff', '#ffeaa7', '#55efc4'];
+const LEVELS_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 let currentQuiz = [];
+
+function renderChallengeButtons(currentLevel) {
+  if (!challengeRow) return;
+  const idx = LEVELS_ORDER.indexOf(currentLevel);
+  const higher = idx >= 0 ? LEVELS_ORDER.slice(idx + 1) : [];
+
+  challengeRow.innerHTML = '';
+  if (higher.length === 0) return;
+
+  const hint = document.createElement('p');
+  hint.className = 'challenge-hint';
+  hint.textContent = 'Feeling lucky? Skip ahead:';
+  challengeRow.appendChild(hint);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'challenge-buttons';
+  higher.forEach(lvl => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-challenge';
+    btn.dataset.startLevel = lvl;
+    btn.textContent = `🍀 I'll risk it — ${lvl}`;
+    wrap.appendChild(btn);
+  });
+  challengeRow.appendChild(wrap);
+}
 
 function pickMotivation(score) {
   const tier = score >= 8 ? 'high' : score >= 5 ? 'mid' : 'low';
@@ -70,8 +97,9 @@ function updateProgress() {
   progressText.textContent = `${answered} / ${total} answered`;
 }
 
-async function loadQuiz() {
-  const res = await fetch('/api/quiz');
+async function loadQuiz(level) {
+  const url = level ? `/api/quiz?level=${encodeURIComponent(level)}` : '/api/quiz';
+  const res = await fetch(url);
   if (res.status === 401) {
     window.location.href = '/login';
     return;
@@ -118,11 +146,16 @@ function renderQuiz() {
 
 questionsList.addEventListener('change', updateProgress);
 
-startBtn.addEventListener('click', async () => {
+startScreen.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-start-level]');
+  if (!btn) return;
+  const level = btn.dataset.startLevel || '';
   startScreen.classList.add('hidden');
   quizForm.classList.remove('hidden');
-  await loadQuiz();
+  await loadQuiz(level);
 });
+
+renderChallengeButtons(startScreen.dataset.currentLevel);
 
 quizForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -167,6 +200,10 @@ function showResult(data) {
   if (data.score >= 7) {
     launchConfetti();
   }
+
+  const newLevel = data.leveled_up ? data.next_level : data.level;
+  startScreen.dataset.currentLevel = newLevel;
+  renderChallengeButtons(newLevel);
 
   reviewList.innerHTML = '';
   data.results.forEach(r => {
