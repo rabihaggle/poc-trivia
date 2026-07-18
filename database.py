@@ -32,6 +32,15 @@ def init_db():
             question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
             text TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS scores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            name TEXT,
+            score INTEGER NOT NULL,
+            total INTEGER NOT NULL,
+            played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
         """
     )
     conn.commit()

@@ -11,6 +11,10 @@ let currentQuiz = [];
 
 async function loadQuiz() {
   const res = await fetch('/api/quiz');
+  if (res.status === 401) {
+    window.location.href = '/login';
+    return;
+  }
   if (!res.ok) {
     questionsList.innerHTML = '<p>No hay preguntas cargadas. Andá al panel de administración para cargar algunas.</p>';
     return;
@@ -69,6 +73,10 @@ quizForm.addEventListener('submit', async (e) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ answers }),
   });
+  if (res.status === 401) {
+    window.location.href = '/login';
+    return;
+  }
   const data = await res.json();
   showResult(data);
 });

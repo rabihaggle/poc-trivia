@@ -4,12 +4,19 @@
 <div class="container">
   <header class="app-header">
     <h1>🧠 Trivia</h1>
+    {% if session.user %}
     <p class="subtitle">
       Contestá las 10 preguntas y descubrí tu puntaje ·
+      <a href="{{ url_for('ranking') }}">Ranking</a> ·
       <a href="{{ url_for('admin') }}">Panel de administración</a>
     </p>
+    {% include "_user_bar.html" %}
+    {% else %}
+    <p class="subtitle">Iniciá sesión con Google para jugar y aparecer en el ranking.</p>
+    {% endif %}
   </header>
 
+  {% if session.user %}
   <div id="start-screen" class="screen">
     <button id="start-btn" class="btn btn-primary">Comenzar</button>
   </div>
@@ -25,9 +32,16 @@
     <div id="review-list"></div>
     <button id="retry-btn" class="btn btn-secondary">Jugar de nuevo</button>
   </div>
+  {% else %}
+  <div class="screen login-screen">
+    <a href="{{ url_for('login') }}" class="btn btn-google">Iniciar sesión con Google</a>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
+{% if session.user %}
 <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Ranking · Trivia{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="app-header">
+    <h1>Ranking</h1>
+    <p class="subtitle"><a href="{{ url_for('index') }}">← Volver al juego</a></p>
+    {% include "_user_bar.html" %}
+  </header>
+
+  <section class="admin-list">
+    {% if scores %}
+    <div class="table-scroll">
+      <table class="ranking-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Jugador</th>
+            <th>Puntaje</th>
+            <th>Fecha y hora (UTC)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in scores %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ s.name or s.email }}<br><span class="muted">{{ s.email }}</span></td>
+            <td>{{ s.score }} / {{ s.total }}</td>
+            <td>{{ s.played_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p>Todavía no hay partidas jugadas.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
