@@ -4,7 +4,11 @@
 <div class="container">
   <header class="app-header">
     <h1>Panel de administración</h1>
-    <p class="subtitle"><a href="{{ url_for('index') }}">← Volver al juego</a> · <a href="{{ url_for('ranking') }}">Ranking</a></p>
+    <p class="subtitle">
+      <a href="{{ url_for('index') }}">← Volver al juego</a> ·
+      <a href="{{ url_for('ranking') }}">Ranking</a> ·
+      <a href="{{ url_for('admin_results') }}">Resultados por usuario</a>
+    </p>
     {% include "_user_bar.html" %}
   </header>
 
@@ -13,6 +17,14 @@
     <form action="{{ url_for('admin_create_question') }}" method="post">
       <label>Pregunta
         <input type="text" name="question_text" required>
+      </label>
+      <label>Nivel (CEFR)
+        <select name="level" required>
+          <option value="">Elegir nivel…</option>
+          {% for lvl in levels %}
+          <option value="{{ lvl }}">{{ lvl }}</option>
+          {% endfor %}
+        </select>
       </label>
       <label>Respuesta correcta
         <input type="text" name="correct_answer" required>
@@ -35,7 +47,7 @@
     {% for q in questions %}
     <div class="question-card">
       <div class="question-card-header">
-        <strong>{{ q.text }}</strong>
+        <strong><span class="level-badge">{{ q.level }}</span> {{ q.text }}</strong>
         <form action="{{ url_for('admin_delete_question', question_id=q.id) }}" method="post" onsubmit="return confirm('¿Eliminar esta pregunta?');">
           <button type="submit" class="btn btn-danger btn-small">Eliminar</button>
         </form>

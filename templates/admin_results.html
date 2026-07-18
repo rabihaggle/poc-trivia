@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Resultados · Trivia{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="app-header">
+    <h1>Resultados por usuario</h1>
+    <p class="subtitle"><a href="{{ url_for('admin') }}">← Volver al panel</a></p>
+    {% include "_user_bar.html" %}
+  </header>
+
+  <section class="admin-list">
+    {% if users %}
+    <div class="table-scroll">
+      <table class="ranking-table">
+        <thead>
+          <tr>
+            <th>Jugador</th>
+            <th>Intentos</th>
+            <th>Mejor puntaje</th>
+            <th>Último intento (UTC)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+              <a href="{{ url_for('admin_user_results', email=u.email) }}">{{ u.name or u.email }}</a>
+              <br><span class="muted">{{ u.email }}</span>
+            </td>
+            <td>{{ u.attempt_count }}</td>
+            <td>{{ u.best_score }} / {{ u.total }}</td>
+            <td>{{ u.last_played }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p>Todavía no hay partidas jugadas.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

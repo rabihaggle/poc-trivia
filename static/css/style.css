@@ -237,3 +237,42 @@ body {
   color: #636e72;
   font-size: 0.8rem;
 }
+
+/* Levels & results */
+.level-badge {
+  display: inline-block;
+  background: #efebff;
+  color: var(--primary-dark);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+  margin-right: 0.4rem;
+}
+
+.level-summary {
+  margin: 0 0 1rem;
+}
+
+.level-summary .level-badge {
+  margin-bottom: 0.3rem;
+}
+
+.attempt-card {
+  text-align: left;
+}
+
+.attempt-card h2 {
+  font-size: 1rem;
+  margin-top: 0;
+}
+
+.ranking-table .ok {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.ranking-table .fail {
+  color: var(--danger);
+  font-weight: 700;
+}

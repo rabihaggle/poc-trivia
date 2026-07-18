@@ -17,6 +17,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from database import get_db, init_db
 from seed import seed
 
+LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
+
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-secret-change-me")
@@ -110,7 +112,7 @@ def ranking():
     scores = conn.execute(
         """
         SELECT email, name, score, total, played_at
-        FROM scores
+        FROM attempts
         ORDER BY score DESC, played_at DESC
         LIMIT 50
         """
@@ -119,13 +121,31 @@ def ranking():
     return render_template("ranking.html", scores=scores)
 
 
+def pick_balanced_by_level(question_rows, count=10):
+    by_level = {level: [] for level in LEVELS}
+    for q in question_rows:
+        by_level.setdefault(q["level"], []).append(q)
+    for pool in by_level.values():
+        random.shuffle(pool)
+
+    chosen = []
+    level_order = list(by_level.keys())
+    while len(chosen) < count and any(by_level[lvl] for lvl in level_order):
+        for lvl in level_order:
+            if len(chosen) >= count:
+                break
+            if by_level[lvl]:
+                chosen.append(by_level[lvl].pop())
+    return chosen
+
+
 @app.route("/api/quiz")
 @api_login_required
 def api_quiz():
     conn = get_db()
     question_rows = conn.execute(
         """
-        SELECT q.id, q.text
+        SELECT q.id, q.text, q.level
         FROM questions q
         JOIN correct_answers c ON c.question_id = q.id
         WHERE (SELECT COUNT(*) FROM wrong_answers w WHERE w.question_id = q.id) >= 2
@@ -136,7 +156,7 @@ def api_quiz():
         conn.close()
         return jsonify({"error": "No hay preguntas cargadas todavía"}), 400
 
-    chosen = random.sample(question_rows, k=min(10, len(question_rows)))
+    chosen = pick_balanced_by_level(question_rows, count=10)
 
     quiz = []
     for q in chosen:
@@ -164,6 +184,17 @@ def api_quiz():
     return jsonify(quiz)
 
 
+def resolve_option_text(conn, option_key):
+    if not option_key or "-" not in option_key:
+        return None
+    kind, _, raw_id = option_key.partition("-")
+    if not raw_id.isdigit():
+        return None
+    table = "correct_answers" if kind == "correct" else "wrong_answers"
+    row = conn.execute(f"SELECT text FROM {table} WHERE id = ?", (int(raw_id),)).fetchone()
+    return row["text"] if row else None
+
+
 @app.route("/api/quiz/submit", methods=["POST"])
 @api_login_required
 def api_quiz_submit():
@@ -173,8 +204,12 @@ def api_quiz_submit():
     conn = get_db()
     results = []
     score = 0
+    answer_records = []
     for question_id_str, option_key in answers.items():
         question_id = int(question_id_str)
+        question = conn.execute(
+            "SELECT text, level FROM questions WHERE id = ?", (question_id,)
+        ).fetchone()
         correct = conn.execute(
             "SELECT id, text FROM correct_answers WHERE question_id = ?", (question_id,)
         ).fetchone()
@@ -188,12 +223,32 @@ def api_quiz_submit():
                 "correct_text": correct["text"] if correct else None,
             }
         )
+        answer_records.append(
+            (
+                question["text"] if question else "(pregunta eliminada)",
+                question["level"] if question else None,
+                resolve_option_text(conn, option_key),
+                correct["text"] if correct else "(sin respuesta correcta)",
+                1 if is_correct else 0,
+                question_id,
+            )
+        )
 
     user = session["user"]
-    conn.execute(
-        "INSERT INTO scores (email, name, score, total) VALUES (?, ?, ?, ?)",
+    cur = conn.execute(
+        "INSERT INTO attempts (email, name, score, total) VALUES (?, ?, ?, ?)",
         (user["email"], user["name"], score, len(answers)),
     )
+    attempt_id = cur.lastrowid
+    for question_text, level, selected_text, correct_text, is_correct, question_id in answer_records:
+        conn.execute(
+            """
+            INSERT INTO attempt_answers
+                (attempt_id, question_id, question_text, level, selected_text, correct_text, is_correct)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (attempt_id, question_id, question_text, level, selected_text, correct_text, is_correct),
+        )
     conn.commit()
     conn.close()
 
@@ -204,7 +259,7 @@ def api_quiz_submit():
 @admin_required
 def admin():
     conn = get_db()
-    questions = conn.execute("SELECT id, text FROM questions ORDER BY id DESC").fetchall()
+    questions = conn.execute("SELECT id, text, level FROM questions ORDER BY level, id DESC").fetchall()
 
     data = []
     for q in questions:
@@ -218,26 +273,30 @@ def admin():
             {
                 "id": q["id"],
                 "text": q["text"],
+                "level": q["level"],
                 "correct": correct["text"] if correct else None,
                 "wrongs": wrongs,
             }
         )
     conn.close()
-    return render_template("admin.html", questions=data)
+    return render_template("admin.html", questions=data, levels=LEVELS)
 
 
 @app.route("/admin/questions", methods=["POST"])
 @admin_required
 def admin_create_question():
     question_text = request.form.get("question_text", "").strip()
+    level = request.form.get("level", "").strip().upper()
     correct_answer = request.form.get("correct_answer", "").strip()
     wrong_answers = [w.strip() for w in request.form.getlist("wrong_answers") if w.strip()]
 
-    if not question_text or not correct_answer or len(wrong_answers) < 2:
+    if not question_text or level not in LEVELS or not correct_answer or len(wrong_answers) < 2:
         return redirect(url_for("admin"))
 
     conn = get_db()
-    cur = conn.execute("INSERT INTO questions (text) VALUES (?)", (question_text,))
+    cur = conn.execute(
+        "INSERT INTO questions (text, level) VALUES (?, ?)", (question_text, level)
+    )
     question_id = cur.lastrowid
     conn.execute(
         "INSERT INTO correct_answers (question_id, text) VALUES (?, ?)",
@@ -260,6 +319,64 @@ def admin_delete_question(question_id):
     conn.commit()
     conn.close()
     return redirect(url_for("admin"))
+
+
+@app.route("/admin/results")
+@admin_required
+def admin_results():
+    conn = get_db()
+    users = conn.execute(
+        """
+        SELECT
+            email,
+            MAX(name) AS name,
+            COUNT(*) AS attempt_count,
+            MAX(score) AS best_score,
+            MAX(total) AS total,
+            MAX(played_at) AS last_played
+        FROM attempts
+        GROUP BY email
+        ORDER BY last_played DESC
+        """
+    ).fetchall()
+    conn.close()
+    return render_template("admin_results.html", users=users)
+
+
+@app.route("/admin/results/<string:email>")
+@admin_required
+def admin_user_results(email):
+    conn = get_db()
+    attempts = conn.execute(
+        "SELECT id, name, score, total, played_at FROM attempts WHERE email = ? ORDER BY played_at DESC",
+        (email,),
+    ).fetchall()
+
+    detail = []
+    for a in attempts:
+        answers = conn.execute(
+            """
+            SELECT question_text, level, selected_text, correct_text, is_correct
+            FROM attempt_answers WHERE attempt_id = ? ORDER BY id
+            """,
+            (a["id"],),
+        ).fetchall()
+
+        counts = {}
+        for ans in answers:
+            lvl = ans["level"] or "?"
+            counts.setdefault(lvl, {"correct": 0, "total": 0})
+            counts[lvl]["total"] += 1
+            if ans["is_correct"]:
+                counts[lvl]["correct"] += 1
+        level_summary = [
+            {"level": lvl, **counts[lvl]} for lvl in LEVELS if lvl in counts
+        ]
+
+        detail.append({"attempt": a, "answers": answers, "level_summary": level_summary})
+
+    conn.close()
+    return render_template("admin_user_results.html", email=email, detail=detail)
 
 
 if __name__ == "__main__":

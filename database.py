@@ -18,6 +18,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS questions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             text TEXT NOT NULL,
+            level TEXT NOT NULL DEFAULT 'A1',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -33,13 +34,24 @@ def init_db():
             text TEXT NOT NULL
         );
 
-        CREATE TABLE IF NOT EXISTS scores (
+        CREATE TABLE IF NOT EXISTS attempts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT NOT NULL,
             name TEXT,
             score INTEGER NOT NULL,
             total INTEGER NOT NULL,
             played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS attempt_answers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            attempt_id INTEGER NOT NULL REFERENCES attempts(id) ON DELETE CASCADE,
+            question_id INTEGER REFERENCES questions(id) ON DELETE SET NULL,
+            question_text TEXT NOT NULL,
+            level TEXT,
+            selected_text TEXT,
+            correct_text TEXT NOT NULL,
+            is_correct INTEGER NOT NULL
         );
         """
     )
