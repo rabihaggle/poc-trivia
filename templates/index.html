@@ -54,7 +54,10 @@
     <p id="score-text" class="score-text"></p>
     <p id="level-info" class="level-info"></p>
     <div id="review-list"></div>
-    <button id="retry-btn" class="btn btn-secondary">Play again</button>
+    <div class="result-actions">
+      <button id="next-level-btn" type="button" class="btn btn-primary hidden"></button>
+      <button id="retry-btn" type="button" class="btn btn-secondary">Play again</button>
+    </div>
   </div>
   {% else %}
   <div class="screen login-screen">

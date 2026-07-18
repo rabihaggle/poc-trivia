@@ -10,6 +10,7 @@ const motivationText = document.getElementById('motivation-text');
 const scoreText = document.getElementById('score-text');
 const levelInfo = document.getElementById('level-info');
 const reviewList = document.getElementById('review-list');
+const nextLevelBtn = document.getElementById('next-level-btn');
 const retryBtn = document.getElementById('retry-btn');
 const confettiContainer = document.getElementById('confetti-container');
 
@@ -205,6 +206,14 @@ function showResult(data) {
   startScreen.dataset.currentLevel = newLevel;
   renderChallengeButtons(newLevel);
 
+  if (data.leveled_up) {
+    nextLevelBtn.textContent = `Next level: ${data.next_level} ▶`;
+    nextLevelBtn.dataset.level = data.next_level;
+    nextLevelBtn.classList.remove('hidden');
+  } else {
+    nextLevelBtn.classList.add('hidden');
+  }
+
   reviewList.innerHTML = '';
   data.results.forEach(r => {
     const q = currentQuiz.find(qq => qq.question_id === r.question_id);
@@ -218,4 +227,11 @@ function showResult(data) {
 retryBtn.addEventListener('click', () => {
   resultScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
+});
+
+nextLevelBtn.addEventListener('click', async () => {
+  const level = nextLevelBtn.dataset.level || '';
+  resultScreen.classList.add('hidden');
+  quizForm.classList.remove('hidden');
+  await loadQuiz(level);
 });

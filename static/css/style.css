@@ -129,6 +129,18 @@ body {
   text-align: center;
 }
 
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+#next-level-btn {
+  box-shadow: 0 6px 16px rgba(108, 92, 231, 0.35);
+}
+
 .level-info {
   font-weight: 600;
   background: #f1f2f6;
