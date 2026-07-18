@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Trivia{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="app-header">
+    <h1>🧠 Trivia</h1>
+    <p class="subtitle">
+      Contestá las 10 preguntas y descubrí tu puntaje ·
+      <a href="{{ url_for('admin') }}">Panel de administración</a>
+    </p>
+  </header>
+
+  <div id="start-screen" class="screen">
+    <button id="start-btn" class="btn btn-primary">Comenzar</button>
+  </div>
+
+  <form id="quiz-form" class="screen hidden">
+    <div id="questions-list"></div>
+    <button type="submit" class="btn btn-primary">Finalizar</button>
+  </form>
+
+  <div id="result-screen" class="screen hidden">
+    <h2>Resultado</h2>
+    <p id="score-text"></p>
+    <div id="review-list"></div>
+    <button id="retry-btn" class="btn btn-secondary">Jugar de nuevo</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/game.js') }}"></script>
+{% endblock %}

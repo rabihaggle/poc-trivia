@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Admin · Trivia{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="app-header">
+    <h1>Panel de administración</h1>
+    <p class="subtitle"><a href="{{ url_for('index') }}">← Volver al juego</a></p>
+  </header>
+
+  <section class="admin-form">
+    <h2>Nueva pregunta</h2>
+    <form action="{{ url_for('admin_create_question') }}" method="post">
+      <label>Pregunta
+        <input type="text" name="question_text" required>
+      </label>
+      <label>Respuesta correcta
+        <input type="text" name="correct_answer" required>
+      </label>
+      <div id="wrong-answers-wrapper">
+        <label>Respuesta incorrecta
+          <input type="text" name="wrong_answers" required>
+        </label>
+        <label>Respuesta incorrecta
+          <input type="text" name="wrong_answers" required>
+        </label>
+      </div>
+      <button type="button" id="add-wrong-btn" class="btn btn-secondary btn-small">+ Agregar otra incorrecta</button>
+      <button type="submit" class="btn btn-primary">Guardar pregunta</button>
+    </form>
+  </section>
+
+  <section class="admin-list">
+    <h2>Preguntas cargadas ({{ questions|length }})</h2>
+    {% for q in questions %}
+    <div class="question-card">
+      <div class="question-card-header">
+        <strong>{{ q.text }}</strong>
+        <form action="{{ url_for('admin_delete_question', question_id=q.id) }}" method="post" onsubmit="return confirm('¿Eliminar esta pregunta?');">
+          <button type="submit" class="btn btn-danger btn-small">Eliminar</button>
+        </form>
+      </div>
+      <ul>
+        <li class="correct">✔ {{ q.correct }}</li>
+        {% for w in q.wrongs %}
+        <li>✘ {{ w.text }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% else %}
+    <p>No hay preguntas cargadas todavía.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('add-wrong-btn').addEventListener('click', () => {
+  const wrapper = document.getElementById('wrong-answers-wrapper');
+  const label = document.createElement('label');
+  label.textContent = 'Respuesta incorrecta ';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.name = 'wrong_answers';
+  label.appendChild(input);
+  wrapper.appendChild(label);
+});
+</script>
+{% endblock %}
