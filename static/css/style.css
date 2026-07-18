@@ -385,3 +385,42 @@ body {
   font-weight: 600;
   min-width: 3.5rem;
 }
+
+/* Question import / export */
+.import-banner {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.import-banner-ok {
+  background: #eafaf1;
+  color: #218c53;
+}
+
+.import-banner-error {
+  background: #fdecea;
+  color: #c0392b;
+}
+
+.import-export-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.import-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-form code {
+  background: #f1f2f6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}

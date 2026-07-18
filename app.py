@@ -325,6 +325,20 @@ def admin():
     return render_template("admin.html", questions=data, levels=LEVELS)
 
 
+def insert_question(conn, text, level, correct_answer, wrong_answers):
+    cur = conn.execute("INSERT INTO questions (text, level) VALUES (?, ?)", (text, level))
+    question_id = cur.lastrowid
+    conn.execute(
+        "INSERT INTO correct_answers (question_id, text) VALUES (?, ?)",
+        (question_id, correct_answer),
+    )
+    for w in wrong_answers:
+        conn.execute(
+            "INSERT INTO wrong_answers (question_id, text) VALUES (?, ?)", (question_id, w)
+        )
+    return question_id
+
+
 @app.route("/admin/questions", methods=["POST"])
 @admin_required
 def admin_create_question():
@@ -337,18 +351,7 @@ def admin_create_question():
         return redirect(url_for("admin"))
 
     conn = get_db()
-    cur = conn.execute(
-        "INSERT INTO questions (text, level) VALUES (?, ?)", (question_text, level)
-    )
-    question_id = cur.lastrowid
-    conn.execute(
-        "INSERT INTO correct_answers (question_id, text) VALUES (?, ?)",
-        (question_id, correct_answer),
-    )
-    for w in wrong_answers:
-        conn.execute(
-            "INSERT INTO wrong_answers (question_id, text) VALUES (?, ?)", (question_id, w)
-        )
+    insert_question(conn, question_text, level, correct_answer, wrong_answers)
     conn.commit()
     conn.close()
     return redirect(url_for("admin"))
@@ -362,6 +365,78 @@ def admin_delete_question(question_id):
     conn.commit()
     conn.close()
     return redirect(url_for("admin"))
+
+
+@app.route("/admin/questions/export")
+@admin_required
+def admin_questions_export():
+    conn = get_db()
+    rows = conn.execute("SELECT id, text, level FROM questions ORDER BY level, id").fetchall()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["level", "question", "correct_answer", "wrong_answers"])
+    for q in rows:
+        correct = conn.execute(
+            "SELECT text FROM correct_answers WHERE question_id = ?", (q["id"],)
+        ).fetchone()
+        wrongs = conn.execute(
+            "SELECT text FROM wrong_answers WHERE question_id = ?", (q["id"],)
+        ).fetchall()
+        writer.writerow(
+            [
+                q["level"],
+                q["text"],
+                correct["text"] if correct else "",
+                "|".join(w["text"] for w in wrongs),
+            ]
+        )
+    conn.close()
+
+    csv_data = "﻿" + output.getvalue()
+    return Response(
+        csv_data,
+        mimetype="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="trivia_questions.csv"'},
+    )
+
+
+@app.route("/admin/questions/import", methods=["POST"])
+@admin_required
+def admin_questions_import():
+    file = request.files.get("csv_file")
+    if not file or not file.filename:
+        return redirect(url_for("admin", import_error="no_file"))
+
+    try:
+        text_stream = io.StringIO(file.stream.read().decode("utf-8-sig"))
+    except UnicodeDecodeError:
+        return redirect(url_for("admin", import_error="bad_encoding"))
+
+    reader = csv.DictReader(text_stream)
+    required_columns = {"level", "question", "correct_answer", "wrong_answers"}
+    if not reader.fieldnames or not required_columns.issubset(set(reader.fieldnames)):
+        return redirect(url_for("admin", import_error="bad_columns"))
+
+    conn = get_db()
+    imported = 0
+    skipped = 0
+    for row in reader:
+        level = (row.get("level") or "").strip().upper()
+        question_text = (row.get("question") or "").strip()
+        correct_answer = (row.get("correct_answer") or "").strip()
+        wrong_answers = [w.strip() for w in (row.get("wrong_answers") or "").split("|") if w.strip()]
+
+        if level not in LEVELS or not question_text or not correct_answer or len(wrong_answers) < 2:
+            skipped += 1
+            continue
+
+        insert_question(conn, question_text, level, correct_answer, wrong_answers)
+        imported += 1
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for("admin", imported=imported, skipped=skipped))
 
 
 @app.route("/admin/results")

@@ -13,6 +13,34 @@
     {% include "_user_bar.html" %}
   </header>
 
+  {% if request.args.get('imported') is not none %}
+  <div class="import-banner import-banner-ok">
+    Imported {{ request.args.get('imported') }} question(s).
+    {% if request.args.get('skipped', '0') != '0' %}{{ request.args.get('skipped') }} row(s) skipped (missing fields, bad level, or fewer than 2 wrong answers).{% endif %}
+  </div>
+  {% elif request.args.get('import_error') %}
+  <div class="import-banner import-banner-error">
+    {% if request.args.get('import_error') == 'no_file' %}No CSV file was selected.
+    {% elif request.args.get('import_error') == 'bad_columns' %}The CSV must have these columns: level, question, correct_answer, wrong_answers.
+    {% else %}Couldn't read that file as UTF-8 CSV.{% endif %}
+  </div>
+  {% endif %}
+
+  <section class="admin-form">
+    <h2>Import / export questions</h2>
+    <p class="muted">
+      CSV columns: <code>level, question, correct_answer, wrong_answers</code> — separate multiple wrong answers with <code>|</code>.
+      Imported rows are added as new questions; existing ones are never changed or removed.
+    </p>
+    <div class="import-export-row">
+      <a href="{{ url_for('admin_questions_export') }}" class="btn btn-secondary">Export all questions (CSV)</a>
+      <form action="{{ url_for('admin_questions_import') }}" method="post" enctype="multipart/form-data" class="import-form">
+        <input type="file" name="csv_file" accept=".csv" required>
+        <button type="submit" class="btn btn-primary">Import CSV</button>
+      </form>
+    </div>
+  </section>
+
   <section class="admin-form">
     <h2>New question</h2>
     <form action="{{ url_for('admin_create_question') }}" method="post">
