@@ -1,3 +1,5 @@
+import csv
+import io
 import os
 import random
 from functools import wraps
@@ -5,6 +7,7 @@ from functools import wraps
 from authlib.integrations.flask_client import OAuth
 from flask import (
     Flask,
+    Response,
     jsonify,
     redirect,
     render_template,
@@ -377,6 +380,105 @@ def admin_user_results(email):
 
     conn.close()
     return render_template("admin_user_results.html", email=email, detail=detail)
+
+
+@app.route("/admin/export")
+@admin_required
+def admin_export():
+    email = request.args.get("email", "").strip()
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+    granularity = "summary" if request.args.get("granularity") == "summary" else "detail"
+
+    conditions = []
+    params = []
+    if email:
+        conditions.append("a.email = ?")
+        params.append(email)
+    if date_from:
+        conditions.append("a.played_at >= ?")
+        params.append(f"{date_from} 00:00:00")
+    if date_to:
+        conditions.append("a.played_at <= ?")
+        params.append(f"{date_to} 23:59:59")
+    where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+
+    conn = get_db()
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    if granularity == "summary":
+        rows = conn.execute(
+            f"""
+            SELECT a.email, a.name, a.score, a.total, a.played_at
+            FROM attempts a
+            {where_clause}
+            ORDER BY a.played_at DESC
+            """,
+            params,
+        ).fetchall()
+        writer.writerow(["email", "nombre", "puntaje", "total", "fecha_hora_utc"])
+        for r in rows:
+            writer.writerow([r["email"], r["name"], r["score"], r["total"], r["played_at"]])
+        name_part = "resumen"
+    else:
+        rows = conn.execute(
+            f"""
+            SELECT a.email, a.name, a.score AS attempt_score, a.total AS attempt_total,
+                   a.played_at, aa.level, aa.question_text, aa.selected_text,
+                   aa.correct_text, aa.is_correct
+            FROM attempts a
+            JOIN attempt_answers aa ON aa.attempt_id = a.id
+            {where_clause}
+            ORDER BY a.played_at DESC, aa.id
+            """,
+            params,
+        ).fetchall()
+        writer.writerow(
+            [
+                "email",
+                "nombre",
+                "fecha_hora_utc",
+                "puntaje_intento",
+                "total_intento",
+                "nivel",
+                "pregunta",
+                "respuesta_elegida",
+                "respuesta_correcta",
+                "correcta",
+            ]
+        )
+        for r in rows:
+            writer.writerow(
+                [
+                    r["email"],
+                    r["name"],
+                    r["played_at"],
+                    r["attempt_score"],
+                    r["attempt_total"],
+                    r["level"],
+                    r["question_text"],
+                    r["selected_text"],
+                    r["correct_text"],
+                    "si" if r["is_correct"] else "no",
+                ]
+            )
+        name_part = "detalle"
+    conn.close()
+
+    filename = f"trivia_{name_part}"
+    if email:
+        filename += f"_{email.replace('@', '_at_')}"
+    if date_from or date_to:
+        filename += f"_{date_from or 'inicio'}_a_{date_to or 'hoy'}"
+    filename += ".csv"
+
+    csv_data = "﻿" + output.getvalue()
+    return Response(
+        csv_data,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 if __name__ == "__main__":

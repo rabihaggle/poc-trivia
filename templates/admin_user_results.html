@@ -4,7 +4,10 @@
 <div class="container">
   <header class="app-header">
     <h1>{{ email }}</h1>
-    <p class="subtitle"><a href="{{ url_for('admin_results') }}">← Volver a resultados</a></p>
+    <p class="subtitle">
+      <a href="{{ url_for('admin_results') }}">← Volver a resultados</a> ·
+      <a href="{{ url_for('admin_export', email=email) }}">Exportar CSV de este usuario</a>
+    </p>
     {% include "_user_bar.html" %}
   </header>
 
