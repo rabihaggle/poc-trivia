@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Trivia{% endblock %}
+{% block content %}
+<div class="container">
+  <header class="app-header">
+    <h1>Dashboard</h1>
+    <p class="subtitle">
+      <a href="{{ url_for('admin') }}">← Back to panel</a> ·
+      <a href="{{ url_for('admin_results') }}">Results by user</a> ·
+      <a href="{{ url_for('ranking') }}">Ranking</a> ·
+      <a href="{{ url_for('admin_export') }}">Export all (CSV)</a>
+    </p>
+    {% include "_user_bar.html" %}
+  </header>
+
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <span class="kpi-value">{{ total_users }}</span>
+      <span class="kpi-label">Players</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-value">{{ total_attempts }}</span>
+      <span class="kpi-label">Attempts played</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-value">{{ avg_score if avg_score is not none else "—" }}</span>
+      <span class="kpi-label">Average score (out of 10)</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-value">{{ level_up_count }}</span>
+      <span class="kpi-label">Level-ups earned</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-value">{{ total_questions }}</span>
+      <span class="kpi-label">Questions in the bank</span>
+    </div>
+  </section>
+
+  <section class="admin-list">
+    <h2>Players by current level</h2>
+    <p class="muted">The level each player's next quiz would be served at, based on their most recent attempt.</p>
+    {% if users_by_level|selectattr("count", "gt", 0)|list %}
+    <div class="bar-chart">
+      {% for item in users_by_level %}
+      <div class="bar-row">
+        <span class="bar-label level-badge">{{ item.level }}</span>
+        <div class="bar-track"><div class="bar-fill" style="width: {{ item.pct }}%;"></div></div>
+        <span class="bar-value">{{ item.count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p>No games played yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="admin-list">
+    <h2>Attempts by level played</h2>
+    <p class="muted">How many games were played at each level, and the average score there.</p>
+    {% if attempts_by_level|selectattr("count", "gt", 0)|list %}
+    <div class="bar-chart">
+      {% for item in attempts_by_level %}
+      <div class="bar-row">
+        <span class="bar-label level-badge">{{ item.level }}</span>
+        <div class="bar-track"><div class="bar-fill" style="width: {{ item.pct }}%;"></div></div>
+        <span class="bar-value">{{ item.count }}{% if item.avg_score is not none %} <span class="muted">(avg {{ item.avg_score }}/10)</span>{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p>No games played yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="admin-list">
+    <h2>Question bank composition</h2>
+    <div class="bar-chart">
+      {% for item in questions_by_level %}
+      <div class="bar-row">
+        <span class="bar-label level-badge">{{ item.level }}</span>
+        <div class="bar-track"><div class="bar-fill bar-fill-muted" style="width: {{ item.pct }}%;"></div></div>
+        <span class="bar-value">{{ item.count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="admin-list">
+    <h2>Recent activity</h2>
+    {% if recent_attempts %}
+    <div class="table-scroll">
+      <table class="ranking-table">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Level</th>
+            <th>Score</th>
+            <th>Played at (UTC)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in recent_attempts %}
+          <tr>
+            <td>{{ a.name or a.email }}<br><span class="muted">{{ a.email }}</span></td>
+            <td><span class="level-badge">{{ a.level }}</span></td>
+            <td>{{ a.score }} / {{ a.total }}</td>
+            <td>{{ a.played_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p>No games played yet.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

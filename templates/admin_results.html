@@ -6,6 +6,7 @@
     <h1>Results by user</h1>
     <p class="subtitle">
       <a href="{{ url_for('admin') }}">← Back to panel</a> ·
+      <a href="{{ url_for('admin_dashboard') }}">Dashboard</a> ·
       <a href="{{ url_for('admin_export') }}">Export all (CSV)</a>
     </p>
     {% include "_user_bar.html" %}
@@ -40,6 +41,7 @@
         <thead>
           <tr>
             <th>Player</th>
+            <th>Current level</th>
             <th>Attempts</th>
             <th>Best score</th>
             <th>Last played (UTC)</th>
@@ -53,6 +55,7 @@
               <a href="{{ url_for('admin_user_results', email=u.email) }}">{{ u.name or u.email }}</a>
               <br><span class="muted">{{ u.email }}</span>
             </td>
+            <td><span class="level-badge">{{ u.current_level }}</span></td>
             <td>{{ u.attempt_count }}</td>
             <td>{{ u.best_score }} / {{ u.total }}</td>
             <td>{{ u.last_played }}</td>

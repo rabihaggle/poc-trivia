@@ -309,3 +309,79 @@ body {
   color: var(--danger);
   font-weight: 700;
 }
+
+/* Dashboard */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.kpi-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-value {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.kpi-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #636e72;
+  margin-top: 0.25rem;
+}
+
+.admin-list h2 {
+  margin-top: 0;
+}
+
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bar-label {
+  flex: 0 0 2.5rem;
+  text-align: center;
+}
+
+.bar-track {
+  flex: 1 1 auto;
+  background: #f1f2f6;
+  border-radius: 6px;
+  height: 0.9rem;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 6px;
+}
+
+.bar-fill-muted {
+  background: #b8b2f0;
+}
+
+.bar-value {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 3.5rem;
+}

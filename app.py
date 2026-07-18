@@ -368,7 +368,7 @@ def admin_delete_question(question_id):
 @admin_required
 def admin_results():
     conn = get_db()
-    users = conn.execute(
+    rows = conn.execute(
         """
         SELECT
             email,
@@ -382,8 +382,96 @@ def admin_results():
         ORDER BY last_played DESC
         """
     ).fetchall()
+    users = []
+    for r in rows:
+        users.append({**dict(r), "current_level": get_player_level(conn, r["email"])})
     conn.close()
     return render_template("admin_results.html", users=users)
+
+
+@app.route("/admin/dashboard")
+@admin_required
+def admin_dashboard():
+    conn = get_db()
+
+    total_users = conn.execute("SELECT COUNT(DISTINCT email) AS c FROM attempts").fetchone()["c"]
+    total_attempts = conn.execute("SELECT COUNT(*) AS c FROM attempts").fetchone()["c"]
+    total_questions = conn.execute("SELECT COUNT(*) AS c FROM questions").fetchone()["c"]
+    avg_score_row = conn.execute("SELECT AVG(score) AS avg FROM attempts").fetchone()
+    avg_score = round(avg_score_row["avg"], 1) if avg_score_row["avg"] is not None else None
+    level_up_count = conn.execute(
+        "SELECT COUNT(*) AS c FROM attempts WHERE score > ? AND level != ?",
+        (LEVEL_UP_THRESHOLD, LEVELS[-1]),
+    ).fetchone()["c"]
+
+    # Attempts (games played) at each level, with the average score at that level.
+    attempts_rows = conn.execute(
+        "SELECT level, COUNT(*) AS count, AVG(score) AS avg_score FROM attempts GROUP BY level"
+    ).fetchall()
+    attempts_map = {r["level"]: r for r in attempts_rows}
+    max_attempts_count = max((r["count"] for r in attempts_rows), default=0)
+    attempts_by_level = []
+    for lvl in LEVELS:
+        r = attempts_map.get(lvl)
+        count = r["count"] if r else 0
+        avg = round(r["avg_score"], 1) if r and r["avg_score"] is not None else None
+        attempts_by_level.append(
+            {
+                "level": lvl,
+                "count": count,
+                "avg_score": avg,
+                "pct": round(count / max_attempts_count * 100) if max_attempts_count else 0,
+            }
+        )
+
+    # Question bank composition per level.
+    q_rows = conn.execute("SELECT level, COUNT(*) AS c FROM questions GROUP BY level").fetchall()
+    q_map = {r["level"]: r["c"] for r in q_rows}
+    max_q_count = max(q_map.values(), default=0)
+    questions_by_level = [
+        {
+            "level": lvl,
+            "count": q_map.get(lvl, 0),
+            "pct": round(q_map.get(lvl, 0) / max_q_count * 100) if max_q_count else 0,
+        }
+        for lvl in LEVELS
+    ]
+
+    # Each player's current calculated level (i.e. the level their next quiz would use).
+    emails = [r["email"] for r in conn.execute("SELECT DISTINCT email FROM attempts").fetchall()]
+    level_counts = {lvl: 0 for lvl in LEVELS}
+    for email in emails:
+        level_counts[get_player_level(conn, email)] += 1
+    max_user_count = max(level_counts.values(), default=0)
+    users_by_level = [
+        {
+            "level": lvl,
+            "count": level_counts[lvl],
+            "pct": round(level_counts[lvl] / max_user_count * 100) if max_user_count else 0,
+        }
+        for lvl in LEVELS
+    ]
+
+    recent_attempts = conn.execute(
+        """
+        SELECT email, name, level, score, total, played_at
+        FROM attempts ORDER BY played_at DESC, id DESC LIMIT 20
+        """
+    ).fetchall()
+
+    conn.close()
+    return render_template(
+        "admin_dashboard.html",
+        total_users=total_users,
+        total_attempts=total_attempts,
+        total_questions=total_questions,
+        avg_score=avg_score,
+        level_up_count=level_up_count,
+        attempts_by_level=attempts_by_level,
+        questions_by_level=questions_by_level,
+        users_by_level=users_by_level,
+        recent_attempts=recent_attempts,
+    )
 
 
 @app.route("/admin/results/<string:email>")

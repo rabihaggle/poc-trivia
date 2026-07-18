@@ -6,6 +6,7 @@
     <h1>{{ email }}</h1>
     <p class="subtitle">
       <a href="{{ url_for('admin_results') }}">← Back to results</a> ·
+      <a href="{{ url_for('admin_dashboard') }}">Dashboard</a> ·
       <a href="{{ url_for('admin_export', email=email) }}">Export CSV for this user</a>
     </p>
     {% include "_user_bar.html" %}
