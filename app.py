@@ -2,6 +2,7 @@ import csv
 import io
 import os
 import random
+from collections import Counter
 from functools import wraps
 
 from authlib.integrations.flask_client import OAuth
@@ -21,6 +22,7 @@ from database import get_db, init_db
 from seed import seed
 
 LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
+LEVEL_UP_THRESHOLD = 6  # score strictly greater than this levels the player up
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -114,7 +116,7 @@ def ranking():
     conn = get_db()
     scores = conn.execute(
         """
-        SELECT email, name, score, total, played_at
+        SELECT email, name, level, score, total, played_at
         FROM attempts
         ORDER BY score DESC, played_at DESC
         LIMIT 50
@@ -124,21 +126,40 @@ def ranking():
     return render_template("ranking.html", scores=scores)
 
 
-def pick_balanced_by_level(question_rows, count=10):
-    by_level = {level: [] for level in LEVELS}
+def get_player_level(conn, email):
+    """The CEFR level the player's next quiz should be served at."""
+    last = conn.execute(
+        "SELECT level, score FROM attempts WHERE email = ? ORDER BY played_at DESC, id DESC LIMIT 1",
+        (email,),
+    ).fetchone()
+    if not last or last["level"] not in LEVELS:
+        return LEVELS[0]
+    index = LEVELS.index(last["level"])
+    if last["score"] > LEVEL_UP_THRESHOLD and index < len(LEVELS) - 1:
+        return LEVELS[index + 1]
+    return last["level"]
+
+
+def pick_for_level(question_rows, level, count=10):
+    by_level = {lvl: [] for lvl in LEVELS}
     for q in question_rows:
         by_level.setdefault(q["level"], []).append(q)
     for pool in by_level.values():
         random.shuffle(pool)
 
-    chosen = []
-    level_order = list(by_level.keys())
-    while len(chosen) < count and any(by_level[lvl] for lvl in level_order):
-        for lvl in level_order:
+    chosen = by_level.get(level, [])[:count]
+
+    # Fallback in case the target level doesn't have enough questions loaded yet.
+    if len(chosen) < count:
+        other_levels = [lvl for lvl in LEVELS if lvl != level]
+        for lvl in other_levels:
+            for q in by_level[lvl]:
+                if len(chosen) >= count:
+                    break
+                chosen.append(q)
             if len(chosen) >= count:
                 break
-            if by_level[lvl]:
-                chosen.append(by_level[lvl].pop())
+
     return chosen
 
 
@@ -157,9 +178,10 @@ def api_quiz():
 
     if not question_rows:
         conn.close()
-        return jsonify({"error": "No hay preguntas cargadas todavía"}), 400
+        return jsonify({"error": "No questions have been loaded yet"}), 400
 
-    chosen = pick_balanced_by_level(question_rows, count=10)
+    level = get_player_level(conn, session["user"]["email"])
+    chosen = pick_for_level(question_rows, level, count=10)
 
     quiz = []
     for q in chosen:
@@ -184,7 +206,7 @@ def api_quiz():
         )
 
     conn.close()
-    return jsonify(quiz)
+    return jsonify({"level": level, "questions": quiz})
 
 
 def resolve_option_text(conn, option_key):
@@ -228,19 +250,22 @@ def api_quiz_submit():
         )
         answer_records.append(
             (
-                question["text"] if question else "(pregunta eliminada)",
+                question["text"] if question else "(question deleted)",
                 question["level"] if question else None,
                 resolve_option_text(conn, option_key),
-                correct["text"] if correct else "(sin respuesta correcta)",
+                correct["text"] if correct else "(no correct answer)",
                 1 if is_correct else 0,
                 question_id,
             )
         )
 
+    levels_used = [rec[1] for rec in answer_records if rec[1] in LEVELS]
+    attempt_level = Counter(levels_used).most_common(1)[0][0] if levels_used else LEVELS[0]
+
     user = session["user"]
     cur = conn.execute(
-        "INSERT INTO attempts (email, name, score, total) VALUES (?, ?, ?, ?)",
-        (user["email"], user["name"], score, len(answers)),
+        "INSERT INTO attempts (email, name, level, score, total) VALUES (?, ?, ?, ?, ?)",
+        (user["email"], user["name"], attempt_level, score, len(answers)),
     )
     attempt_id = cur.lastrowid
     for question_text, level, selected_text, correct_text, is_correct, question_id in answer_records:
@@ -255,7 +280,22 @@ def api_quiz_submit():
     conn.commit()
     conn.close()
 
-    return jsonify({"score": score, "total": len(answers), "results": results})
+    level_index = LEVELS.index(attempt_level)
+    leveled_up = score > LEVEL_UP_THRESHOLD and level_index < len(LEVELS) - 1
+    next_level = LEVELS[level_index + 1] if leveled_up else attempt_level
+    is_max_level = attempt_level == LEVELS[-1]
+
+    return jsonify(
+        {
+            "score": score,
+            "total": len(answers),
+            "results": results,
+            "level": attempt_level,
+            "leveled_up": leveled_up,
+            "next_level": next_level,
+            "is_max_level": is_max_level,
+        }
+    )
 
 
 @app.route("/admin")
@@ -351,7 +391,7 @@ def admin_results():
 def admin_user_results(email):
     conn = get_db()
     attempts = conn.execute(
-        "SELECT id, name, score, total, played_at FROM attempts WHERE email = ? ORDER BY played_at DESC",
+        "SELECT id, name, level, score, total, played_at FROM attempts WHERE email = ? ORDER BY played_at DESC",
         (email,),
     ).fetchall()
 
@@ -410,17 +450,19 @@ def admin_export():
     if granularity == "summary":
         rows = conn.execute(
             f"""
-            SELECT a.email, a.name, a.score, a.total, a.played_at
+            SELECT a.email, a.name, a.level, a.score, a.total, a.played_at
             FROM attempts a
             {where_clause}
             ORDER BY a.played_at DESC
             """,
             params,
         ).fetchall()
-        writer.writerow(["email", "nombre", "puntaje", "total", "fecha_hora_utc"])
+        writer.writerow(["email", "name", "level", "score", "total", "played_at_utc"])
         for r in rows:
-            writer.writerow([r["email"], r["name"], r["score"], r["total"], r["played_at"]])
-        name_part = "resumen"
+            writer.writerow(
+                [r["email"], r["name"], r["level"], r["score"], r["total"], r["played_at"]]
+            )
+        name_part = "summary"
     else:
         rows = conn.execute(
             f"""
@@ -437,15 +479,15 @@ def admin_export():
         writer.writerow(
             [
                 "email",
-                "nombre",
-                "fecha_hora_utc",
-                "puntaje_intento",
-                "total_intento",
-                "nivel",
-                "pregunta",
-                "respuesta_elegida",
-                "respuesta_correcta",
-                "correcta",
+                "name",
+                "played_at_utc",
+                "attempt_score",
+                "attempt_total",
+                "level",
+                "question",
+                "selected_answer",
+                "correct_answer",
+                "is_correct",
             ]
         )
         for r in rows:
@@ -460,17 +502,17 @@ def admin_export():
                     r["question_text"],
                     r["selected_text"],
                     r["correct_text"],
-                    "si" if r["is_correct"] else "no",
+                    "yes" if r["is_correct"] else "no",
                 ]
             )
-        name_part = "detalle"
+        name_part = "detail"
     conn.close()
 
     filename = f"trivia_{name_part}"
     if email:
         filename += f"_{email.replace('@', '_at_')}"
     if date_from or date_to:
-        filename += f"_{date_from or 'inicio'}_a_{date_to or 'hoy'}"
+        filename += f"_{date_from or 'start'}_to_{date_to or 'now'}"
     filename += ".csv"
 
     csv_data = "﻿" + output.getvalue()

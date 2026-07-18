@@ -1,40 +1,42 @@
 {% extends "base.html" %}
-{% block title %}Trivia{% endblock %}
+{% block title %}English Level Trivia{% endblock %}
 {% block content %}
 <div class="container">
   <header class="app-header">
-    <h1>🧠 Trivia</h1>
+    <h1>🧠 English Level Trivia</h1>
     {% if session.user %}
     <p class="subtitle">
-      Contestá las 10 preguntas y descubrí tu puntaje ·
+      Answer 10 questions and find out your English level ·
       <a href="{{ url_for('ranking') }}">Ranking</a> ·
-      <a href="{{ url_for('admin') }}">Panel de administración</a>
+      <a href="{{ url_for('admin') }}">Admin panel</a>
     </p>
     {% include "_user_bar.html" %}
     {% else %}
-    <p class="subtitle">Iniciá sesión con Google para jugar y aparecer en el ranking.</p>
+    <p class="subtitle">Sign in with Google to play and appear on the ranking.</p>
     {% endif %}
   </header>
 
   {% if session.user %}
   <div id="start-screen" class="screen">
-    <button id="start-btn" class="btn btn-primary">Comenzar</button>
+    <button id="start-btn" class="btn btn-primary">Start</button>
   </div>
 
   <form id="quiz-form" class="screen hidden">
+    <p id="quiz-level-text" class="subtitle"></p>
     <div id="questions-list"></div>
-    <button type="submit" class="btn btn-primary">Finalizar</button>
+    <button type="submit" class="btn btn-primary">Finish</button>
   </form>
 
   <div id="result-screen" class="screen hidden">
-    <h2>Resultado</h2>
+    <h2>Result</h2>
     <p id="score-text"></p>
+    <p id="level-info" class="level-info"></p>
     <div id="review-list"></div>
-    <button id="retry-btn" class="btn btn-secondary">Jugar de nuevo</button>
+    <button id="retry-btn" class="btn btn-secondary">Play again</button>
   </div>
   {% else %}
   <div class="screen login-screen">
-    <a href="{{ url_for('login') }}" class="btn btn-google">Iniciar sesión con Google</a>
+    <a href="{{ url_for('login') }}" class="btn btn-google">Sign in with Google</a>
   </div>
   {% endif %}
 </div>

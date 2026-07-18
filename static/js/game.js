@@ -1,9 +1,11 @@
 const startBtn = document.getElementById('start-btn');
 const startScreen = document.getElementById('start-screen');
 const quizForm = document.getElementById('quiz-form');
+const quizLevelText = document.getElementById('quiz-level-text');
 const questionsList = document.getElementById('questions-list');
 const resultScreen = document.getElementById('result-screen');
 const scoreText = document.getElementById('score-text');
+const levelInfo = document.getElementById('level-info');
 const reviewList = document.getElementById('review-list');
 const retryBtn = document.getElementById('retry-btn');
 
@@ -16,10 +18,12 @@ async function loadQuiz() {
     return;
   }
   if (!res.ok) {
-    questionsList.innerHTML = '<p>No hay preguntas cargadas. Andá al panel de administración para cargar algunas.</p>';
+    questionsList.innerHTML = '<p>No questions have been loaded yet. Ask an admin to add some in the admin panel.</p>';
     return;
   }
-  currentQuiz = await res.json();
+  const data = await res.json();
+  currentQuiz = data.questions;
+  quizLevelText.textContent = `Level: ${data.level}`;
   renderQuiz();
 }
 
@@ -84,14 +88,25 @@ quizForm.addEventListener('submit', async (e) => {
 function showResult(data) {
   quizForm.classList.add('hidden');
   resultScreen.classList.remove('hidden');
-  scoreText.textContent = `Puntaje: ${data.score} / ${data.total}`;
+  scoreText.textContent = `Score: ${data.score} / ${data.total}`;
+
+  if (data.leveled_up) {
+    levelInfo.textContent = `🎉 Level ${data.level} passed! You leveled up to ${data.next_level}.`;
+    levelInfo.className = 'level-info level-up';
+  } else if (data.is_max_level && data.score > 6) {
+    levelInfo.textContent = `🏆 You scored ${data.score}/10 at level ${data.level} — the highest level. Great job!`;
+    levelInfo.className = 'level-info level-up';
+  } else {
+    levelInfo.textContent = `Your English level: ${data.level}. Score 7 or more to level up next time.`;
+    levelInfo.className = 'level-info';
+  }
 
   reviewList.innerHTML = '';
   data.results.forEach(r => {
     const q = currentQuiz.find(qq => qq.question_id === r.question_id);
     const item = document.createElement('div');
     item.className = 'review-item ' + (r.is_correct ? 'correct' : 'incorrect');
-    item.textContent = `${q ? q.question_text : ''} — ${r.is_correct ? 'Correcto ✔' : `Incorrecto ✘ (Correcta: ${r.correct_text})`}`;
+    item.textContent = `${q ? q.question_text : ''} — ${r.is_correct ? 'Correct ✔' : `Incorrect ✘ (Correct answer: ${r.correct_text})`}`;
     reviewList.appendChild(item);
   });
 }

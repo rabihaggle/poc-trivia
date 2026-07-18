@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{{ email }} · Resultados{% endblock %}
+{% block title %}{{ email }} · Results{% endblock %}
 {% block content %}
 <div class="container">
   <header class="app-header">
     <h1>{{ email }}</h1>
     <p class="subtitle">
-      <a href="{{ url_for('admin_results') }}">← Volver a resultados</a> ·
-      <a href="{{ url_for('admin_export', email=email) }}">Exportar CSV de este usuario</a>
+      <a href="{{ url_for('admin_results') }}">← Back to results</a> ·
+      <a href="{{ url_for('admin_export', email=email) }}">Export CSV for this user</a>
     </p>
     {% include "_user_bar.html" %}
   </header>
@@ -14,7 +14,11 @@
   {% if detail %}
   {% for d in detail %}
   <section class="admin-list attempt-card">
-    <h2>Intento del {{ d.attempt.played_at }} (UTC) — {{ d.attempt.score }} / {{ d.attempt.total }}</h2>
+    <h2>
+      Attempt from {{ d.attempt.played_at }} (UTC) —
+      <span class="level-badge">{{ d.attempt.level }}</span>
+      {{ d.attempt.score }} / {{ d.attempt.total }}
+    </h2>
 
     {% if d.level_summary %}
     <p class="level-summary">
@@ -28,11 +32,11 @@
       <table class="ranking-table">
         <thead>
           <tr>
-            <th>Nivel</th>
-            <th>Pregunta</th>
-            <th>Su respuesta</th>
-            <th>Respuesta correcta</th>
-            <th>Resultado</th>
+            <th>Level</th>
+            <th>Question</th>
+            <th>Their answer</th>
+            <th>Correct answer</th>
+            <th>Result</th>
           </tr>
         </thead>
         <tbody>
@@ -51,7 +55,7 @@
   </section>
   {% endfor %}
   {% else %}
-  <p>Este usuario todavía no jugó ninguna partida.</p>
+  <p>This user hasn't played any games yet.</p>
   {% endif %}
 </div>
 {% endblock %}

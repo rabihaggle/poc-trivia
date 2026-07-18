@@ -38,6 +38,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT NOT NULL,
             name TEXT,
+            level TEXT NOT NULL DEFAULT 'A1',
             score INTEGER NOT NULL,
             total INTEGER NOT NULL,
             played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

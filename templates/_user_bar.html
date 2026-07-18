@@ -1,6 +1,6 @@
 {% if session.user %}
 <div class="user-bar">
   <span>{{ session.user.name }} · {{ session.user.email }}</span>
-  <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+  <a href="{{ url_for('logout') }}">Log out</a>
 </div>
 {% endif %}

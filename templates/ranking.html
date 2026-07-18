@@ -4,7 +4,7 @@
 <div class="container">
   <header class="app-header">
     <h1>Ranking</h1>
-    <p class="subtitle"><a href="{{ url_for('index') }}">← Volver al juego</a></p>
+    <p class="subtitle"><a href="{{ url_for('index') }}">← Back to game</a></p>
     {% include "_user_bar.html" %}
   </header>
 
@@ -15,9 +15,10 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Jugador</th>
-            <th>Puntaje</th>
-            <th>Fecha y hora (UTC)</th>
+            <th>Player</th>
+            <th>Level</th>
+            <th>Score</th>
+            <th>Date & time (UTC)</th>
           </tr>
         </thead>
         <tbody>
@@ -25,6 +26,7 @@
           <tr>
             <td>{{ loop.index }}</td>
             <td>{{ s.name or s.email }}<br><span class="muted">{{ s.email }}</span></td>
+            <td><span class="level-badge">{{ s.level }}</span></td>
             <td>{{ s.score }} / {{ s.total }}</td>
             <td>{{ s.played_at }}</td>
           </tr>
@@ -33,7 +35,7 @@
       </table>
     </div>
     {% else %}
-    <p>Todavía no hay partidas jugadas.</p>
+    <p>No games played yet.</p>
     {% endif %}
   </section>
 </div>

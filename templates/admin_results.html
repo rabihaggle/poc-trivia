@@ -1,35 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Resultados · Trivia{% endblock %}
+{% block title %}Results · Trivia{% endblock %}
 {% block content %}
 <div class="container">
   <header class="app-header">
-    <h1>Resultados por usuario</h1>
+    <h1>Results by user</h1>
     <p class="subtitle">
-      <a href="{{ url_for('admin') }}">← Volver al panel</a> ·
-      <a href="{{ url_for('admin_export') }}">Exportar todo (CSV)</a>
+      <a href="{{ url_for('admin') }}">← Back to panel</a> ·
+      <a href="{{ url_for('admin_export') }}">Export all (CSV)</a>
     </p>
     {% include "_user_bar.html" %}
   </header>
 
   <section class="admin-form">
-    <h2>Exportar CSV</h2>
+    <h2>Export CSV</h2>
     <form action="{{ url_for('admin_export') }}" method="get" class="export-form">
-      <label>Usuario (email, opcional)
-        <input type="email" name="email" placeholder="Todos los usuarios">
+      <label>User (email, optional)
+        <input type="email" name="email" placeholder="All users">
       </label>
-      <label>Desde
+      <label>From
         <input type="date" name="date_from">
       </label>
-      <label>Hasta
+      <label>To
         <input type="date" name="date_to">
       </label>
-      <label>Formato
+      <label>Format
         <select name="granularity">
-          <option value="detail">Detalle por pregunta</option>
-          <option value="summary">Resumen por intento</option>
+          <option value="detail">Per-question detail</option>
+          <option value="summary">Per-attempt summary</option>
         </select>
       </label>
-      <button type="submit" class="btn btn-primary">Descargar CSV</button>
+      <button type="submit" class="btn btn-primary">Download CSV</button>
     </form>
   </section>
 
@@ -39,10 +39,10 @@
       <table class="ranking-table">
         <thead>
           <tr>
-            <th>Jugador</th>
-            <th>Intentos</th>
-            <th>Mejor puntaje</th>
-            <th>Último intento (UTC)</th>
+            <th>Player</th>
+            <th>Attempts</th>
+            <th>Best score</th>
+            <th>Last played (UTC)</th>
             <th></th>
           </tr>
         </thead>
@@ -63,7 +63,7 @@
       </table>
     </div>
     {% else %}
-    <p>Todavía no hay partidas jugadas.</p>
+    <p>No games played yet.</p>
     {% endif %}
   </section>
 </div>

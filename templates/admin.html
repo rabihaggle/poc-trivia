@@ -3,53 +3,53 @@
 {% block content %}
 <div class="container">
   <header class="app-header">
-    <h1>Panel de administración</h1>
+    <h1>Admin panel</h1>
     <p class="subtitle">
-      <a href="{{ url_for('index') }}">← Volver al juego</a> ·
+      <a href="{{ url_for('index') }}">← Back to game</a> ·
       <a href="{{ url_for('ranking') }}">Ranking</a> ·
-      <a href="{{ url_for('admin_results') }}">Resultados por usuario</a>
+      <a href="{{ url_for('admin_results') }}">Results by user</a>
     </p>
     {% include "_user_bar.html" %}
   </header>
 
   <section class="admin-form">
-    <h2>Nueva pregunta</h2>
+    <h2>New question</h2>
     <form action="{{ url_for('admin_create_question') }}" method="post">
-      <label>Pregunta
+      <label>Question
         <input type="text" name="question_text" required>
       </label>
-      <label>Nivel (CEFR)
+      <label>Level (CEFR)
         <select name="level" required>
-          <option value="">Elegir nivel…</option>
+          <option value="">Choose level…</option>
           {% for lvl in levels %}
           <option value="{{ lvl }}">{{ lvl }}</option>
           {% endfor %}
         </select>
       </label>
-      <label>Respuesta correcta
+      <label>Correct answer
         <input type="text" name="correct_answer" required>
       </label>
       <div id="wrong-answers-wrapper">
-        <label>Respuesta incorrecta
+        <label>Wrong answer
           <input type="text" name="wrong_answers" required>
         </label>
-        <label>Respuesta incorrecta
+        <label>Wrong answer
           <input type="text" name="wrong_answers" required>
         </label>
       </div>
-      <button type="button" id="add-wrong-btn" class="btn btn-secondary btn-small">+ Agregar otra incorrecta</button>
-      <button type="submit" class="btn btn-primary">Guardar pregunta</button>
+      <button type="button" id="add-wrong-btn" class="btn btn-secondary btn-small">+ Add another wrong answer</button>
+      <button type="submit" class="btn btn-primary">Save question</button>
     </form>
   </section>
 
   <section class="admin-list">
-    <h2>Preguntas cargadas ({{ questions|length }})</h2>
+    <h2>Loaded questions ({{ questions|length }})</h2>
     {% for q in questions %}
     <div class="question-card">
       <div class="question-card-header">
         <strong><span class="level-badge">{{ q.level }}</span> {{ q.text }}</strong>
-        <form action="{{ url_for('admin_delete_question', question_id=q.id) }}" method="post" onsubmit="return confirm('¿Eliminar esta pregunta?');">
-          <button type="submit" class="btn btn-danger btn-small">Eliminar</button>
+        <form action="{{ url_for('admin_delete_question', question_id=q.id) }}" method="post" onsubmit="return confirm('Delete this question?');">
+          <button type="submit" class="btn btn-danger btn-small">Delete</button>
         </form>
       </div>
       <ul>
@@ -60,7 +60,7 @@
       </ul>
     </div>
     {% else %}
-    <p>No hay preguntas cargadas todavía.</p>
+    <p>No questions loaded yet.</p>
     {% endfor %}
   </section>
 </div>
@@ -71,7 +71,7 @@
 document.getElementById('add-wrong-btn').addEventListener('click', () => {
   const wrapper = document.getElementById('wrong-answers-wrapper');
   const label = document.createElement('label');
-  label.textContent = 'Respuesta incorrecta ';
+  label.textContent = 'Wrong answer ';
   const input = document.createElement('input');
   input.type = 'text';
   input.name = 'wrong_answers';

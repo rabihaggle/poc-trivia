@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Acceso restringido · Trivia{% endblock %}
+{% block title %}Access restricted · Trivia{% endblock %}
 {% block content %}
 <div class="container">
   <header class="app-header">
-    <h1>Acceso restringido</h1>
+    <h1>Access restricted</h1>
   </header>
   <div class="screen" style="text-align:center;">
-    <p>Tu cuenta ({{ session.user.email }}) no tiene permiso para administrar este juego.</p>
-    <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver al juego</a>
-    <a href="{{ url_for('logout') }}" class="btn btn-secondary">Cerrar sesión</a>
+    <p>Your account ({{ session.user.email }}) doesn't have permission to administer this game.</p>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to game</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-secondary">Log out</a>
   </div>
 </div>
 {% endblock %}
