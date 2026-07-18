@@ -2,14 +2,73 @@ const startBtn = document.getElementById('start-btn');
 const startScreen = document.getElementById('start-screen');
 const quizForm = document.getElementById('quiz-form');
 const quizLevelText = document.getElementById('quiz-level-text');
+const progressFill = document.getElementById('progress-fill');
+const progressText = document.getElementById('progress-text');
 const questionsList = document.getElementById('questions-list');
 const resultScreen = document.getElementById('result-screen');
+const motivationText = document.getElementById('motivation-text');
 const scoreText = document.getElementById('score-text');
 const levelInfo = document.getElementById('level-info');
 const reviewList = document.getElementById('review-list');
 const retryBtn = document.getElementById('retry-btn');
+const confettiContainer = document.getElementById('confetti-container');
+
+const MOTIVATION_PHRASES = {
+  high: [
+    "🔥 You're on fire!",
+    '🌟 Absolutely amazing!',
+    '🏆 Outstanding performance!',
+    "🚀 You're unstoppable!",
+    '🎯 Nailed it!',
+  ],
+  mid: [
+    '💪 Great job!',
+    '👏 Well done!',
+    '✨ Impressive work!',
+    '📈 Solid progress!',
+    '🙌 Nice one!',
+  ],
+  low: [
+    '🌱 Every expert was once a beginner!',
+    '💡 Practice makes progress!',
+    "🎯 Keep going, you've got this!",
+    '📚 Learning is a journey — enjoy it!',
+    '🧩 One piece at a time!',
+  ],
+};
+
+const CONFETTI_COLORS = ['#6c5ce7', '#fd79a8', '#74b9ff', '#ffeaa7', '#55efc4'];
 
 let currentQuiz = [];
+
+function pickMotivation(score) {
+  const tier = score >= 8 ? 'high' : score >= 5 ? 'mid' : 'low';
+  const phrases = MOTIVATION_PHRASES[tier];
+  return phrases[Math.floor(Math.random() * phrases.length)];
+}
+
+function launchConfetti() {
+  if (!confettiContainer) return;
+  for (let i = 0; i < 40; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    piece.style.animationDuration = `${2 + Math.random() * 1.5}s`;
+    piece.style.animationDelay = `${Math.random() * 0.4}s`;
+    confettiContainer.appendChild(piece);
+    setTimeout(() => piece.remove(), 4200);
+  }
+}
+
+function updateProgress() {
+  const total = currentQuiz.length || 10;
+  const answered = currentQuiz.filter(q =>
+    quizForm.querySelector(`input[name="question-${q.question_id}"]:checked`)
+  ).length;
+  progressFill.style.width = `${(answered / total) * 100}%`;
+  progressText.textContent = `${answered} / ${total} answered`;
+}
 
 async function loadQuiz() {
   const res = await fetch('/api/quiz');
@@ -25,6 +84,7 @@ async function loadQuiz() {
   currentQuiz = data.questions;
   quizLevelText.textContent = `Level: ${data.level}`;
   renderQuiz();
+  updateProgress();
 }
 
 function renderQuiz() {
@@ -55,6 +115,8 @@ function renderQuiz() {
     questionsList.appendChild(block);
   });
 }
+
+questionsList.addEventListener('change', updateProgress);
 
 startBtn.addEventListener('click', async () => {
   startScreen.classList.add('hidden');
@@ -89,6 +151,7 @@ function showResult(data) {
   quizForm.classList.add('hidden');
   resultScreen.classList.remove('hidden');
   scoreText.textContent = `Score: ${data.score} / ${data.total}`;
+  motivationText.textContent = pickMotivation(data.score);
 
   if (data.leveled_up) {
     levelInfo.textContent = `🎉 Level ${data.level} passed! You leveled up to ${data.next_level}.`;
@@ -99,6 +162,10 @@ function showResult(data) {
   } else {
     levelInfo.textContent = `Your English level: ${data.level}. Score 7 or more to level up next time.`;
     levelInfo.className = 'level-info';
+  }
+
+  if (data.score >= 7) {
+    launchConfetti();
   }
 
   reviewList.innerHTML = '';

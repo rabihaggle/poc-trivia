@@ -1,42 +1,64 @@
 {% extends "base.html" %}
 {% block title %}English Level Trivia{% endblock %}
 {% block content %}
+<div id="confetti-container" class="confetti-container" aria-hidden="true"></div>
 <div class="container">
-  <header class="app-header">
-    <h1>🧠 English Level Trivia</h1>
-    {% if session.user %}
+  {% if session.user %}
+  <header class="app-header app-header-compact">
+    <h1 class="app-title">🧠 English Level Trivia</h1>
     <p class="subtitle">
       Answer 10 questions and find out your English level ·
       <a href="{{ url_for('ranking') }}">Ranking</a> ·
       <a href="{{ url_for('admin') }}">Admin panel</a>
     </p>
     {% include "_user_bar.html" %}
-    {% else %}
-    <p class="subtitle">Sign in with Google to play and appear on the ranking.</p>
-    {% endif %}
   </header>
 
-  {% if session.user %}
   <div id="start-screen" class="screen">
-    <button id="start-btn" class="btn btn-primary">Start</button>
+    <div class="hero">
+      <span class="hero-emoji hero-emoji-1">🎓</span>
+      <span class="hero-emoji hero-emoji-2">💬</span>
+      <span class="hero-emoji hero-emoji-3">🌍</span>
+      <span class="hero-emoji hero-emoji-4">✨</span>
+      <span class="hero-emoji hero-emoji-5">📚</span>
+      <span class="hero-emoji hero-emoji-6">🚀</span>
+      <h2 class="hero-title">Ready to test your English?</h2>
+      <p class="hero-tagline">10 quick questions. One shot at bragging rights.</p>
+      <button id="start-btn" class="btn btn-primary btn-hero btn-pulse">Start ▶</button>
+    </div>
   </div>
 
   <form id="quiz-form" class="screen hidden">
-    <p id="quiz-level-text" class="subtitle"></p>
+    <div class="quiz-meta">
+      <span id="quiz-level-text" class="level-pill"></span>
+      <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+      <span id="progress-text" class="progress-text">0 / 10 answered</span>
+    </div>
     <div id="questions-list"></div>
     <button type="submit" class="btn btn-primary">Finish</button>
   </form>
 
   <div id="result-screen" class="screen hidden">
+    <p id="motivation-text" class="motivation-text"></p>
     <h2>Result</h2>
-    <p id="score-text"></p>
+    <p id="score-text" class="score-text"></p>
     <p id="level-info" class="level-info"></p>
     <div id="review-list"></div>
     <button id="retry-btn" class="btn btn-secondary">Play again</button>
   </div>
   {% else %}
   <div class="screen login-screen">
-    <a href="{{ url_for('login') }}" class="btn btn-google">Sign in with Google</a>
+    <div class="hero">
+      <span class="hero-emoji hero-emoji-1">🎓</span>
+      <span class="hero-emoji hero-emoji-2">💬</span>
+      <span class="hero-emoji hero-emoji-3">🌍</span>
+      <span class="hero-emoji hero-emoji-4">✨</span>
+      <span class="hero-emoji hero-emoji-5">📚</span>
+      <span class="hero-emoji hero-emoji-6">🚀</span>
+      <h1 class="hero-title">English Level Trivia</h1>
+      <p class="hero-tagline">Discover your English level in under 2 minutes — one fun question at a time.</p>
+      <a href="{{ url_for('login') }}" class="btn btn-google btn-hero">Sign in with Google</a>
+    </div>
   </div>
   {% endif %}
 </div>

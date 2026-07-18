@@ -13,9 +13,15 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
+}
+
+.app-title,
+.hero-title,
+.motivation-text {
+  font-family: 'Fredoka', 'Poppins', sans-serif;
 }
 
 .container {
@@ -53,6 +59,16 @@ body {
   font-size: 1rem;
   cursor: pointer;
   font-weight: 600;
+  font-family: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
 }
 
 .btn-primary {
@@ -423,4 +439,190 @@ body {
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
   font-size: 0.85rem;
+}
+
+/* Screen transitions */
+.screen:not(.hidden) {
+  animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Hero (landing / start screen) */
+.app-header-compact {
+  margin-bottom: 1.25rem;
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  padding: 3.5rem 1.5rem 3rem;
+  border-radius: 24px;
+  background: linear-gradient(-45deg, #6c5ce7, #a29bfe, #fd79a8, #74b9ff);
+  background-size: 400% 400%;
+  animation: gradientShift 12s ease infinite;
+  box-shadow: 0 20px 40px rgba(108, 92, 231, 0.25);
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-title {
+  position: relative;
+  color: white;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  animation: popIn 0.6s ease;
+}
+
+.hero-tagline {
+  position: relative;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.05rem;
+  max-width: 420px;
+  margin: 0 auto 1.75rem;
+  animation: fadeInUp 0.7s ease 0.1s both;
+}
+
+.hero .btn-hero {
+  position: relative;
+  animation: fadeInUp 0.7s ease 0.25s both;
+}
+
+.hero-emoji {
+  position: absolute;
+  font-size: 1.7rem;
+  opacity: 0.85;
+  animation: float 5s ease-in-out infinite;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hero-emoji-1 { top: 12%; left: 8%; animation-delay: 0s; }
+.hero-emoji-2 { top: 18%; right: 10%; animation-delay: 0.6s; font-size: 1.4rem; }
+.hero-emoji-3 { bottom: 18%; left: 10%; animation-delay: 1.2s; font-size: 1.5rem; }
+.hero-emoji-4 { top: 8%; left: 46%; animation-delay: 1.8s; font-size: 1.2rem; }
+.hero-emoji-5 { bottom: 14%; right: 12%; animation-delay: 2.4s; }
+.hero-emoji-6 { bottom: 34%; right: 28%; animation-delay: 0.3s; font-size: 1.3rem; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-14px) rotate(8deg); }
+}
+
+.btn-hero {
+  font-size: 1.05rem;
+  padding: 0.9rem 2.2rem;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-hero:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+}
+
+.btn-pulse {
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 0 0 0 rgba(255, 255, 255, 0.5); }
+  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 0 0 10px rgba(255, 255, 255, 0); }
+}
+
+/* Quiz progress */
+.quiz-meta {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.level-pill {
+  display: inline-block;
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  margin-bottom: 0.6rem;
+}
+
+.progress-track {
+  background: #e4e2f7;
+  border-radius: 999px;
+  height: 0.5rem;
+  overflow: hidden;
+  margin: 0 auto 0.4rem;
+  max-width: 320px;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--primary), #a29bfe);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  display: block;
+  font-size: 0.8rem;
+  color: #636e72;
+}
+
+/* Result screen */
+.motivation-text {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  animation: popIn 0.5s ease;
+}
+
+.score-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Confetti */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 999;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -10px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0.9;
+  animation-name: confettiFall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes confettiFall {
+  to {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0.4;
+  }
 }
